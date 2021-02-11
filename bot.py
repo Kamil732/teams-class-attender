@@ -3,6 +3,7 @@ import sqlite3
 import chromedriver_autoinstaller
 import schedule
 import re
+import codecs
 
 from time import sleep
 from datetime import datetime
@@ -18,9 +19,10 @@ from selenium.webdriver.common.keys import Keys
 class Bot:
     URL = 'https://teams.microsoft.com'
 
-    def __init__(self, email, password):
+    def __init__(self, email, password, incorrect_creds, ):
         self.email = email
         self.password = password
+        self.incorrect_creds = incorrect_creds
 
     def validate_input(self, regex, text):
         if not re.match(regex, text):
@@ -45,6 +47,28 @@ class Bot:
         password_input.send_keys(self.password)
         password_input.send_keys(Keys.ENTER)
         sleep(2)
+
+        try:
+            self.browser.find_element_by_id('passwordError')
+            self.incorrect_creds()
+            return
+        except:
+            pass
+
+        try:
+            self.browser.find_element_by_id('usernameError')
+            self.incorrect_creds()
+            return
+        except:
+            pass
+
+        try:
+            self.browser.find_element_by_id('idTD_Error')
+            print('--- To many incorrect logins (Try later) --- ')
+            self.incorrect_creds()
+            return
+        except:
+            pass
 
         submit = self.browser.find_element_by_id('idSIButton9')
         submit.click()
@@ -108,19 +132,7 @@ class Bot:
             op = int(input("1. Add class\n2. Done adding\nEnter option : "))
 
     def join_lesson(self, class_name, start_time, end_time):
-        # # day_class = 'node_modules--msteams-bridges-components-calendar-grid-dist-es-src-renderers-grid-date-header-renderer-grid-date-header-renderer__day--3E1zm node_modules--msteams-bridges-components-calendar-grid-dist-es-src-renderers-grid-date-header-renderer-grid-date-header-renderer__currentDayText--1W6M9'
-
-        # # WebDriverWait(self.browser, 10000).until(EC.presence_of_element_located((By.CLASS_NAME, day_class)))
-        # sleep(50)
-        # joins = self.browser.find_elements_by_xpath('//button[.="Join"]')
-        # if not(joins):  # no meeting scheduled
-        #     return
-        # joins[-1].click()
-        # print(joins)
-        # print('lol')
-        # sleep(50)
-        # try_time = int(start_time.split(":")[1]) + 15
-        # try_time = start_time.split(":")[0] + ":" + str(try_time)
+        print('--- Waiting for classes ---')
 
         sleep(5)
 
@@ -282,5 +294,49 @@ class Bot:
 
 
 if __name__ == '__main__':
-    bot = Bot('email to teams', 'password to teams')
-    bot.start()
+    # Create folder if doesn't exist yet
+    if not(os.path.exists(r'C:\Teams Bot')):
+        os.makedirs(r'C:\Teams Bot')
+
+    # Get email and passowrd to the lingos from login.txt
+    while True:
+        try:
+            with codecs.open(r'C:\Teams Bot\login.txt', 'r', 'utf-8') as f:
+                file = f.readline().split(',')
+                EMAIL = file[0]
+                PASSWORD = file[1]
+        except:
+            # Create a login.txt if doesn't exist
+            with codecs.open(r'C:\Teams Bot\login.txt', 'w', 'utf-8') as f:
+                while True:
+                    EMAIL = str(input('Your email: '))
+                    correct_email = str(input('Confirm email: '))
+
+                    if not(EMAIL == correct_email):
+                        print('\a\n--- Emails are not the same ---\n')
+                        continue
+                    break  # if emails are correct then break
+                print('\n')
+
+                while True:
+                    PASSWORD = str(input('Your password: '))
+                    correct_password = str(input('Confirm password: '))
+
+                    if not(PASSWORD == correct_password):
+                        print('\a\n--- Passwords are not the same ---\n')
+                        continue
+                    break  # If passwords are correct then break
+
+                f.write(f'{EMAIL},{PASSWORD}')  # Save login
+                continue
+
+        # Start a Bot
+
+        def incorrect_creds():
+            print('Given credentials are invalid!')
+            os.remove(r'C:\Teams Bot\login.txt')
+            print('RESTART PROGRAM TO PASS THE CREDENTIALS AGAIN')
+            # Remove login.txt and ask about email and password again
+
+        bot = Bot(EMAIL, PASSWORD, incorrect_creds=incorrect_creds)
+        bot.start()
