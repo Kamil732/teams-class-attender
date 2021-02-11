@@ -165,13 +165,13 @@ class Bot:
 
         sleep(4)
         webcam = self.browser.find_element_by_xpath(
-            '//*[@id="page-content-wrapper"]/div[1]/div/calling-pre-join-screen/div/div/div[2]/div[1]/div[2]/div/div/section/div[2]/toggle-button[1]/div/button/span[1]')
-        if(webcam.get_attribute('title') == 'Wyłącz kamere'):
+            '//*[@id="page-content-wrapper"]/div[1]/div/calling-pre-join-screen/div/div/div[2]/div[1]/div[2]/div/div/section/div[2]/toggle-button[1]/div/button')
+        if(webcam.get_attribute('aria-pressed') == 'true'):
             webcam.click()
         sleep(1)
 
-        microphone = self.browser.find_element_by_xpath('//*[@id="preJoinAudioButton"]/div/button/span[1]')
-        if(microphone.get_attribute('title') == 'Wycisz'):
+        microphone = self.browser.find_element_by_xpath('//*[@id="preJoinAudioButton"]/div/button')
+        if(microphone.get_attribute('aria-pressed') == 'true'):
             microphone.click()
 
         sleep(1)
